@@ -1,6 +1,7 @@
 package src
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,15 +9,58 @@ import (
 )
 
 var configFolder string
+var configFilePath string
 
 type configValues struct {
-	version string
+	Version string
 }
 
 type Config interface {
-	//TODO
-	getconfigvalues() configValues
+	readconfigvalues() configValues
 	updateconfigvalues(configValues)
+}
+
+func (c configValues) readconfigvalues() configValues {
+	Logger.Debug("Loading config values.")
+
+	configJson, err := os.ReadFile(configFilePath)
+
+	if err != nil {
+		Logger.Error("Config couldn't be read from a file")
+		// TODO error here
+	}
+
+	var config configValues
+
+	err = json.Unmarshal(configJson, &config)
+	if err != nil {
+		Logger.Error("Config couldn't unmarshaled from JSON")
+		// TODO error here
+	}
+
+	Logger.Debug("Config loaded.")
+
+	return config
+}
+
+func (c configValues) updateconfigvalues(conf configValues) {
+	Logger.Debug("Saving config values.")
+	configJson, err := json.Marshal(conf)
+
+	if err != nil {
+		Logger.Error("Config couldn't be converted to json")
+		// TODO error here
+	}
+
+	err = os.WriteFile(configFilePath, configJson, 0666)
+
+	if err != nil {
+		Logger.Error(fmt.Sprintf("Config couldn't be saved to config path %v", configFilePath))
+		// TODO error here
+	}
+
+	Logger.Debug("Config saved.")
+
 }
 
 func init() {
@@ -45,6 +89,7 @@ func init() {
 	}
 
 	configFolder = filepath.Join(userConfigFolder, configLeafFolder)
+	configFilePath = filepath.Join(configFolder, "config.json")
 
 }
 
@@ -63,6 +108,9 @@ func GetConfig() {
 		Logger.Info("Config folder created.")
 	}
 
-	config := configValues{version: "0.0.1"}
-	Logger.Info(fmt.Sprintf("Loaded config for app version %v", config.version))
+	config := configValues{}
+	config = config.readconfigvalues()
+	config.updateconfigvalues(config)
+
+	Logger.Info(fmt.Sprintf("Loaded config for app version %v", config.Version))
 }
