@@ -20,7 +20,7 @@ type Config interface {
 	updateconfigvalues(configValues)
 }
 
-func (c configValues) readconfigvalues() configValues {
+func (c *configValues) readconfigvalues() {
 	Logger.Debug("Loading config values.")
 
 	configJson, err := os.ReadFile(configFilePath)
@@ -30,17 +30,13 @@ func (c configValues) readconfigvalues() configValues {
 		// TODO error here
 	}
 
-	var config configValues
-
-	err = json.Unmarshal(configJson, &config)
+	err = json.Unmarshal(configJson, &c)
 	if err != nil {
 		Logger.Error("Config couldn't unmarshaled from JSON", "error", err)
 		// TODO error here
 	}
 
 	Logger.Debug("Config loaded")
-
-	return config
 }
 
 func (c configValues) updateconfigvalues(conf configValues) {
@@ -109,7 +105,7 @@ func GetConfig() {
 	}
 
 	config := configValues{}
-	config = config.readconfigvalues()
+	config.readconfigvalues()
 	config.updateconfigvalues(config)
 
 	Logger.Info(fmt.Sprintf("Loaded config for app version %v", config.Version))
