@@ -26,7 +26,7 @@ func (c configValues) readconfigvalues() configValues {
 	configJson, err := os.ReadFile(configFilePath)
 
 	if err != nil {
-		Logger.Error("Config couldn't be read from a file")
+		Logger.Error("Config couldn't be read from a file", "error", err)
 		// TODO error here
 	}
 
@@ -34,11 +34,11 @@ func (c configValues) readconfigvalues() configValues {
 
 	err = json.Unmarshal(configJson, &config)
 	if err != nil {
-		Logger.Error("Config couldn't unmarshaled from JSON")
+		Logger.Error("Config couldn't unmarshaled from JSON", "error", err)
 		// TODO error here
 	}
 
-	Logger.Debug("Config loaded.")
+	Logger.Debug("Config loaded")
 
 	return config
 }
@@ -48,18 +48,18 @@ func (c configValues) updateconfigvalues(conf configValues) {
 	configJson, err := json.Marshal(conf)
 
 	if err != nil {
-		Logger.Error("Config couldn't be converted to json")
+		Logger.Error("Config couldn't be converted to json", "error", err)
 		// TODO error here
 	}
 
 	err = os.WriteFile(configFilePath, configJson, 0666)
 
 	if err != nil {
-		Logger.Error(fmt.Sprintf("Config couldn't be saved to config path %v", configFilePath))
+		Logger.Error(fmt.Sprintf("Config couldn't be saved to config path %v", configFilePath), "error", err)
 		// TODO error here
 	}
 
-	Logger.Debug("Config saved.")
+	Logger.Debug("Config saved")
 
 }
 
@@ -101,11 +101,11 @@ func GetConfig() {
 
 		err = os.MkdirAll(configFolder, 0666)
 		if err != nil {
-			Logger.Error(err.Error())
+			Logger.Error("Failed to make config folder", "error", err)
 			// TODO panic here?
 		}
 
-		Logger.Info("Config folder created.")
+		Logger.Info("Config folder created")
 	}
 
 	config := configValues{}
