@@ -11,6 +11,7 @@ import (
 var configFolder string
 var configFilePath string
 var configBackupFilePath string
+var defaultErrorAppendage string
 
 type configValues struct {
 	Version    string
@@ -30,8 +31,23 @@ func readconfigvalues() configValues {
 
 	// create default config
 	var conf configValues
-	conf.Version = "0.0.1"
-	conf.Categories = append(conf.Categories, "Default")
+	conf.Version = currentVersion
+	conf.Categories = defaultCategories
+	conf.Commands = defaultCommands
+
+	switch runtime.GOOS {
+	case "windows":
+		conf.Shells = defaultWindowsShells
+	case "linux":
+		conf.Shells = defaultLinuxShells
+	case "ios":
+		conf.Shells = defaultIosShells
+
+	default: // unkown system
+		Logger.Warn(fmt.Sprintf("Unknown system %v", runtime.GOOS))
+		panic(fmt.Sprintf("You are using an unsupported operating system: %v. %v", runtime.GOOS, defaultErrorAppendage))
+		// TODO how to handle this in the future?
+	}
 
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		Logger.Info("Config file does not exist, saving a default one")
@@ -46,14 +62,14 @@ func readconfigvalues() configValues {
 
 	if err != nil {
 		Logger.Error("Config couldn't be read from a file", "error", err)
-		panic(fmt.Sprintf("Your config file located in %v cannot be read, fix or remove it.", configFilePath))
+		panic(fmt.Sprintf("Your config file located in %v cannot be read, fix or remove it. %v", configFilePath, defaultErrorAppendage))
 		// TODO replace with a warning and do not panic
 	}
 
 	err = json.Unmarshal(configJson, &conf)
 	if err != nil {
 		Logger.Error("Config couldn't unmarshaled from JSON", "error", err)
-		panic(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it.", configFilePath))
+		panic(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it. %v", configFilePath, defaultErrorAppendage))
 		// TODO replace with a warning and do not panic
 	}
 
@@ -69,21 +85,17 @@ func (c *configValues) saveconfigas(filePath string) {
 
 	if err != nil {
 		Logger.Error("Config couldn't be converted to json", "error", err)
-		fmt.Printf("WARNING: Error while saving config file (cannot marshal JSON), your settings will not be persisted.")
+		fmt.Printf("WARNING: Error while saving config file (cannot marshal JSON), your settings will not be persisted. %v", defaultErrorAppendage)
 		// TODO make it red?
-		//TODO reference log
-		//TODO reference github
 	}
 
 	err = os.WriteFile(filePath, configJson, 0666)
 
 	if err != nil {
 		Logger.Error(fmt.Sprintf("Config couldn't be saved to config path %v", configFilePath), "error", err)
-		fmt.Printf("WARNING: Cannot save config file, your settings will not be persisted.")
+		fmt.Printf("WARNING: Cannot save config file, your settings will not be persisted. %v", defaultErrorAppendage)
 		// TODO error here
 		// TODO make it red
-		//TODO reference log
-		//TODO reference github
 	}
 
 	Logger.Debug("Config saved")
@@ -99,7 +111,7 @@ func (c *configValues) backup() {
 	c.saveconfigas(configBackupFilePath)
 }
 
-func init() {
+func establishFolderPaths() {
 	// switch runtime.GOOS {
 	// case "windows":
 	// 	configFolder = `%APPDATA%\CliBookmark`
@@ -128,11 +140,16 @@ func init() {
 	configFilePath = filepath.Join(configFolder, "config.json")
 	configBackupFilePath = filepath.Join(configFolder, "config_backup.json")
 
+	defaultErrorAppendage = fmt.Sprintf("Logs and config can be found in %v. Please raise and issue or contribute at: %v", configFolder, repoLink)
+
 	//TODO move GetConfig code to here
 
 }
 
 func GetConfig() {
+	initConsts()
+	establishFolderPaths()
+
 	Logger.Debug(fmt.Sprintf("Config folder location: %v", configFolder))
 
 	if _, err := os.Stat(configFolder); os.IsNotExist(err) {
