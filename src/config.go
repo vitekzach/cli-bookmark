@@ -10,30 +10,32 @@ import (
 
 var configFolder string
 var configFilePath string
+var configBackupFilePath string
 
 type configValues struct {
-	Version string
+	Version  string
+	Category []string
 }
 
 type Config interface {
-	saveconfigvalues()
+	save()
+	backup()
 }
 
 func readconfigvalues() configValues {
-	// TODO what if config doesn't exist yet?
-	Logger.Debug("Loading config values.")
+	Logger.Debug("Loading config values")
 
 	// create default config
 	var conf configValues
 	conf.Version = "0.0.1"
+	conf.Category = append(conf.Category, "Default")
 
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		Logger.Info("Config file does not exist, saving a default one.")
-		conf.saveconfigvalues()
+		Logger.Info("Config file does not exist, saving a default one")
+		conf.save()
+		Logger.Debug(fmt.Sprintf("Loaded config: %+v", conf))
 		return conf
-		// TODO save config
 	}
-	// TODO make a config backup first
 
 	Logger.Debug("Config file exists, loading it")
 
@@ -42,21 +44,24 @@ func readconfigvalues() configValues {
 	if err != nil {
 		Logger.Error("Config couldn't be read from a file", "error", err)
 		panic(fmt.Sprintf("Your config file located in %v cannot be read, fix or remove it.", configFilePath))
+		// TODO replace with a warning and do not panic
 	}
 
 	err = json.Unmarshal(configJson, &conf)
 	if err != nil {
 		Logger.Error("Config couldn't unmarshaled from JSON", "error", err)
 		panic(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it.", configFilePath))
+		// TODO replace with a warning and do not panic
 	}
 
-	Logger.Debug("Config loaded")
+	Logger.Debug(fmt.Sprintf("Loaded config: %+v", conf))
+	conf.backup()
 
 	return conf
 }
 
-func (c *configValues) saveconfigvalues() {
-	Logger.Debug("Saving config values.")
+func (c *configValues) saveconfigas(filePath string) {
+	Logger.Debug(fmt.Sprintf("Saving config values to: %v", filePath))
 	configJson, err := json.Marshal(c)
 
 	if err != nil {
@@ -67,7 +72,7 @@ func (c *configValues) saveconfigvalues() {
 		//TODO reference github
 	}
 
-	err = os.WriteFile(configFilePath, configJson, 0666)
+	err = os.WriteFile(filePath, configJson, 0666)
 
 	if err != nil {
 		Logger.Error(fmt.Sprintf("Config couldn't be saved to config path %v", configFilePath), "error", err)
@@ -79,7 +84,16 @@ func (c *configValues) saveconfigvalues() {
 	}
 
 	Logger.Debug("Config saved")
+}
 
+func (c *configValues) save() {
+	Logger.Debug("Saving config regular way")
+	c.saveconfigas(configFilePath)
+}
+
+func (c *configValues) backup() {
+	Logger.Info("Backing up config")
+	c.saveconfigas(configBackupFilePath)
 }
 
 func init() {
@@ -109,6 +123,9 @@ func init() {
 
 	configFolder = filepath.Join(userConfigFolder, configLeafFolder)
 	configFilePath = filepath.Join(configFolder, "config.json")
+	configBackupFilePath = filepath.Join(configFolder, "config_backup.json")
+
+	//TODO move GetConfig code to here
 
 }
 
@@ -133,5 +150,5 @@ func GetConfig() {
 
 	Logger.Info(fmt.Sprintf("Loaded config for app version %v", config.Version))
 	Logger.Info(fmt.Sprintf("Config app version %v", config.Version))
-	config.saveconfigvalues()
+	// config.saveconfigvalues()
 }
