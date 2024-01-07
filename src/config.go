@@ -13,13 +13,16 @@ var configFilePath string
 var configBackupFilePath string
 
 type configValues struct {
-	Version  string
-	Category []string
+	Version    string
+	Categories []string
+	Commands   []Command
+	Shells     []Shell
 }
 
 type Config interface {
 	save()
 	backup()
+	//TODO: verity integrity
 }
 
 func readconfigvalues() configValues {
@@ -28,7 +31,7 @@ func readconfigvalues() configValues {
 	// create default config
 	var conf configValues
 	conf.Version = "0.0.1"
-	conf.Category = append(conf.Category, "Default")
+	conf.Categories = append(conf.Categories, "Default")
 
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		Logger.Info("Config file does not exist, saving a default one")
