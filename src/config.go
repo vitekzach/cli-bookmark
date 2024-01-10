@@ -24,10 +24,15 @@ type Config interface {
 	save()
 	backup()
 	//TODO: verity integrity
+	verifyIntegrity()
 	// TODO: add command
+	AddCommand()
 	// TODO: add category
+	AddCategory()
 	// TODO: remove command
+	RemoveCommand()
 	// TODO: remove category
+	RemoveCategory()
 }
 
 func readconfigvalues() configValues {
@@ -136,9 +141,6 @@ func establishFolderPaths() {
 	configBackupFilePath = filepath.Join(configFolder, "config_backup.json")
 
 	defaultErrorAppendage = fmt.Sprintf("Logs and config can be found in %v. Please raise an issue or contribute at: %v", configFolder, repoLink)
-
-	//TODO move GetConfig code to here
-
 }
 
 func GetConfig() {

@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	l.GetConfig()
+	l.StartApp()
 }

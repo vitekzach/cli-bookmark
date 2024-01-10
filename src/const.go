@@ -15,7 +15,10 @@ func initConsts() {
 	defaultCategories = []string{"Default"}
 	defaultLinuxShells = []Shell{}
 	defaultIosShells = []Shell{}
-	defaultWindowsShells = []Shell{}
+	defaultWindowsShells = []Shell{
+		{Name: "Command prompt", ShortName: "cmd", Command: "cmd.exe"},
+		{Name: "PowerShell", ShortName: "ps1", Command: "ps"},
+	}
 	defaultCommands = []Command{}
 
 }

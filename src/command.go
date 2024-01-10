@@ -6,9 +6,11 @@ type Command struct {
 	CommandShell     Shell
 	ShellCommand     bool
 	LaunchExternally bool
+	SpecialHandler   string
 }
 
 type Shell struct {
-	Name    string
-	Command string
+	Name      string
+	ShortName string
+	Command   string
 }
