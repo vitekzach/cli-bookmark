@@ -49,8 +49,8 @@ func readconfigvalues() configValues {
 
 	default: // unkown system
 		logger.Warn(fmt.Sprintf("Unknown system %v", runtime.GOOS))
-		panic(fmt.Sprintf("You are using an unsupported operating system: %v. %v", runtime.GOOS, defaultErrorAppendage))
-		// TODO how to handle this in the future?
+		error(fmt.Sprintf("You are using an unsupported operating system: %v. %v", runtime.GOOS, defaultErrorAppendage))
+		os.Exit(1)
 	}
 
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
@@ -66,15 +66,15 @@ func readconfigvalues() configValues {
 
 	if err != nil {
 		logger.Error("Config couldn't be read from a file", "error", err)
-		panic(fmt.Sprintf("Your config file located in %v cannot be read, fix or remove it. %v", configFilePath, defaultErrorAppendage))
-		// TODO replace with a warning and do not panic
+		error(fmt.Sprintf("Your config file located in %v cannot be read, fix or remove it. %v", configFilePath, defaultErrorAppendage))
+		os.Exit(1)
 	}
 
 	err = json.Unmarshal(configJson, &conf)
 	if err != nil {
 		logger.Error("Config couldn't unmarshaled from JSON", "error", err)
-		panic(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it. %v", configFilePath, defaultErrorAppendage))
-		// TODO replace with a warning and do not panic
+		error(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it. %v", configFilePath, defaultErrorAppendage))
+		os.Exit(1)
 	}
 
 	logger.Debug(fmt.Sprintf("Loaded config: %+v", conf))
@@ -89,17 +89,16 @@ func (c *configValues) saveconfigas(filePath string) {
 
 	if err != nil {
 		logger.Error("Config couldn't be converted to json", "error", err)
-		fmt.Printf("WARNING: Error while saving config file (cannot marshal JSON), your settings will not be persisted. %v", defaultErrorAppendage)
-		// TODO make it red?
+		warning(fmt.Sprintf("Error while saving config file (cannot marshal JSON), your settings will not be persisted! %v", defaultErrorAppendage))
+		return
 	}
 
 	err = os.WriteFile(filePath, configJson, 0666)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("Config couldn't be saved to config path %v", configFilePath), "error", err)
-		fmt.Printf("WARNING: Cannot save config file, your settings will not be persisted. %v", defaultErrorAppendage)
-		// TODO error here
-		// TODO make it red
+		warning(fmt.Sprintf("Cannot save config file, your settings will not be persisted! %v", defaultErrorAppendage))
+		return
 	}
 
 	logger.Debug("Config saved")
@@ -116,18 +115,11 @@ func (c *configValues) backup() {
 }
 
 func establishFolderPaths() {
-	// switch runtime.GOOS {
-	// case "windows":
-	// 	configFolder = `%APPDATA%\CliBookmark`
-	// default:
-	// 	//TODO
-	// 	configFolder = "TODO"
-	// }
-
 	userConfigFolder, err := os.UserConfigDir()
 	if err != nil {
 		logger.Error("User config dir could not be established!", "error", err)
-		// TODO raise my own error? Panic here?
+		error(fmt.Sprintf("Your user config folder failed to be established. %v", defaultErrorAppendage))
+		os.Exit(1)
 	}
 
 	var configLeafFolder string
@@ -136,7 +128,6 @@ func establishFolderPaths() {
 	case "windows":
 		configLeafFolder = "CliBookmark"
 	default:
-		//TODO
 		configLeafFolder = "clibookmark"
 	}
 
@@ -144,13 +135,14 @@ func establishFolderPaths() {
 	configFilePath = filepath.Join(configFolder, "config.json")
 	configBackupFilePath = filepath.Join(configFolder, "config_backup.json")
 
-	defaultErrorAppendage = fmt.Sprintf("Logs and config can be found in %v. Please raise and issue or contribute at: %v", configFolder, repoLink)
+	defaultErrorAppendage = fmt.Sprintf("Logs and config can be found in %v. Please raise an issue or contribute at: %v", configFolder, repoLink)
 
 	//TODO move GetConfig code to here
 
 }
 
 func GetConfig() {
+	// TODO once proper interface for bookmarker is made, do not export this
 	initConsts()
 	establishFolderPaths()
 
@@ -162,7 +154,8 @@ func GetConfig() {
 		err = os.MkdirAll(configFolder, 0666)
 		if err != nil {
 			logger.Error("Failed to make config folder", "error", err)
-			// TODO panic here?
+			error(fmt.Sprintf("Your config folder couldn't be created. %v", defaultErrorAppendage))
+			os.Exit(1)
 		}
 
 		logger.Info("Config folder created")
@@ -170,9 +163,6 @@ func GetConfig() {
 
 	config := readconfigvalues()
 
-	// config.updateconfigvalues(config)
-
 	logger.Info(fmt.Sprintf("Loaded config for app version %v", config.Version))
 	logger.Info(fmt.Sprintf("Config app version %v", config.Version))
-	// config.saveconfigvalues()
 }
