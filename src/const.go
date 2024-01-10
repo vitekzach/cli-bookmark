@@ -10,8 +10,7 @@ var defaultCommands []Command
 
 func initConsts() {
 	currentVersion = "0.0.1"
-	// TODO replace with real version
-	repoLink = "https://github.com/something"
+	repoLink = "https://github.com/vitekzach/cli-bookmark"
 
 	defaultCategories = []string{"Default"}
 	defaultLinuxShells = []Shell{}
