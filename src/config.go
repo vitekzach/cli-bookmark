@@ -15,7 +15,7 @@ var defaultErrorAppendage string
 
 type configValues struct {
 	Version    string
-	Categories []string
+	Categories []Category
 	Commands   []Command
 	Shells     []Shell
 }
@@ -78,7 +78,11 @@ func readconfigvalues() configValues {
 	err = json.Unmarshal(configJson, &conf)
 	if err != nil {
 		logger.Error("Config couldn't unmarshaled from JSON", "error", err)
-		error(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it. %v", configFilePath, defaultErrorAppendage))
+		err = os.WriteFile(configBackupFilePath, configJson, 0666)
+		if err != nil {
+			logger.Error("Config backup couldn't be saved.", "error", err)
+		}
+		error(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it. There should be a backup already created for you in %v. %v", configFilePath, configBackupFilePath, defaultErrorAppendage))
 		os.Exit(1)
 	}
 
@@ -143,7 +147,7 @@ func establishFolderPaths() {
 	defaultErrorAppendage = fmt.Sprintf("Logs and config can be found in %v. Please raise an issue or contribute at: %v", configFolder, repoLink)
 }
 
-func GetConfig() {
+func getConfig() {
 	// TODO once proper interface for bookmarker is made, do not export this
 	initConsts()
 	establishFolderPaths()
