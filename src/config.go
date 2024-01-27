@@ -20,19 +20,28 @@ type configValues struct {
 	Shells     []Shell
 }
 
+// type error interface {
+//     Error() string
+// }
+
 type Config interface {
 	save()
 	backup()
 	//TODO: verity integrity
 	verifyIntegrity()
 	// TODO: add command
-	AddCommand()
+	addCommand() error
 	// TODO: add category
-	AddCategory()
+	addCategory()
 	// TODO: remove command
-	RemoveCommand()
+	removeCommand()
 	// TODO: remove category
-	RemoveCategory()
+	removeCategory()
+}
+
+func (c *configValues) addCommand(comm Command) error {
+	c.Commands = append(c.Commands, comm)
+	return nil
 }
 
 func readconfigvalues() configValues {
@@ -54,7 +63,7 @@ func readconfigvalues() configValues {
 
 	default: // unkown system
 		logger.Warn(fmt.Sprintf("Unknown system %v", runtime.GOOS))
-		error(fmt.Sprintf("You are using an unsupported operating system: %v. %v", runtime.GOOS, defaultErrorAppendage))
+		printError(fmt.Sprintf("You are using an unsupported operating system: %v. %v", runtime.GOOS, defaultErrorAppendage))
 		os.Exit(1)
 	}
 
@@ -71,7 +80,7 @@ func readconfigvalues() configValues {
 
 	if err != nil {
 		logger.Error("Config couldn't be read from a file", "error", err)
-		error(fmt.Sprintf("Your config file located in %v cannot be read, fix or remove it. %v", configFilePath, defaultErrorAppendage))
+		printError(fmt.Sprintf("Your config file located in %v cannot be read, fix or remove it. %v", configFilePath, defaultErrorAppendage))
 		os.Exit(1)
 	}
 
@@ -82,7 +91,7 @@ func readconfigvalues() configValues {
 		if err != nil {
 			logger.Error("Config backup couldn't be saved.", "error", err)
 		}
-		error(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it. There should be a backup already created for you in %v. %v", configFilePath, configBackupFilePath, defaultErrorAppendage))
+		printError(fmt.Sprintf("Your config file located in %v cannot be parsed as JSON, fix or remove it. There should be a backup already created for you in %v. %v", configFilePath, configBackupFilePath, defaultErrorAppendage))
 		os.Exit(1)
 	}
 
@@ -98,7 +107,7 @@ func (c *configValues) saveconfigas(filePath string) {
 
 	if err != nil {
 		logger.Error("Config couldn't be converted to json", "error", err)
-		warning(fmt.Sprintf("Error while saving config file (cannot marshal JSON), your settings will not be persisted! %v", defaultErrorAppendage))
+		printWarning(fmt.Sprintf("Error while saving config file (cannot marshal JSON), your settings will not be persisted! %v", defaultErrorAppendage))
 		return
 	}
 
@@ -106,7 +115,7 @@ func (c *configValues) saveconfigas(filePath string) {
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("Config couldn't be saved to config path %v", configFilePath), "error", err)
-		warning(fmt.Sprintf("Cannot save config file, your settings will not be persisted! %v", defaultErrorAppendage))
+		printWarning(fmt.Sprintf("Cannot save config file, your settings will not be persisted! %v", defaultErrorAppendage))
 		return
 	}
 
@@ -127,7 +136,7 @@ func establishFolderPaths() {
 	userConfigFolder, err := os.UserConfigDir()
 	if err != nil {
 		logger.Error("User config dir could not be established!", "error", err)
-		error(fmt.Sprintf("Your user config folder failed to be established. %v", defaultErrorAppendage))
+		printError(fmt.Sprintf("Your user config folder failed to be established. %v", defaultErrorAppendage))
 		os.Exit(1)
 	}
 
@@ -160,7 +169,7 @@ func getConfig() {
 		err = os.MkdirAll(configFolder, 0666)
 		if err != nil {
 			logger.Error("Failed to make config folder", "error", err)
-			error(fmt.Sprintf("Your config folder couldn't be created. %v", defaultErrorAppendage))
+			printError(fmt.Sprintf("Your config folder couldn't be created. %v", defaultErrorAppendage))
 			os.Exit(1)
 		}
 
@@ -170,5 +179,8 @@ func getConfig() {
 	config := readconfigvalues()
 
 	logger.Info(fmt.Sprintf("Loaded config for app version %v", config.Version))
+	config.addCommand(Command{Command: "dir", Category: config.Categories[0]})
+	logger.Debug(fmt.Sprintf("After add: %+v", config))
+
 	logger.Info(fmt.Sprintf("Config app version %v", config.Version))
 }

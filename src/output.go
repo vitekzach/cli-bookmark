@@ -12,10 +12,10 @@ func init() {
 	w = color.New(color.FgRed, color.Bold, color.Underline)
 }
 
-func warning(text string) {
+func printWarning(text string) {
 	w.Println(fmt.Sprintf("WARNING: %v", text))
 }
 
-func error(text string) {
+func printError(text string) {
 	w.Println(fmt.Sprintf("ERROR: %v", text))
 }
