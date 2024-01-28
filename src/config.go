@@ -53,19 +53,7 @@ func readconfigvalues() configValues {
 	conf.Categories = defaultCategories
 	conf.Commands = defaultCommands
 
-	switch runtime.GOOS {
-	case "windows":
-		conf.Shells = defaultWindowsShells
-	case "linux":
-		conf.Shells = defaultLinuxShells
-	case "ios":
-		conf.Shells = defaultIosShells
-
-	default: // unkown system
-		logger.Warn(fmt.Sprintf("Unknown system %v", runtime.GOOS))
-		printError(fmt.Sprintf("You are using an unsupported operating system: %v. %v", runtime.GOOS, defaultErrorAppendage))
-		os.Exit(1)
-	}
+	conf.Shells = defaultShells
 
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		logger.Info("Config file does not exist, saving a default one")
@@ -150,15 +138,35 @@ func establishFolderPaths() {
 	}
 
 	configFolder = filepath.Join(userConfigFolder, configLeafFolder)
-	configFilePath = filepath.Join(configFolder, "config.json")
-	configBackupFilePath = filepath.Join(configFolder, "config_backup.json")
+
+	var configFilenamePath string
+	configFileNameEnv := os.Getenv("CLI_BOOKMARK_CONFIG_FILENAME")
+	if configFileNameEnv != "" {
+		configFilenamePath = configFileNameEnv
+	} else {
+		configFilenamePath = "config.json"
+	}
+
+	var configBackupFilenamePath string
+	configBackupFileNameEnv := os.Getenv("CLI_BOOKMARK_CONFIG_BACKUP_FILENAME")
+	if configBackupFileNameEnv != "" {
+		configBackupFilenamePath = configBackupFileNameEnv
+	} else {
+		configBackupFilenamePath = "config_backup.json"
+	}
+
+	configFilePath = filepath.Join(configFolder, configFilenamePath)
+	configBackupFilePath = filepath.Join(configFolder, configBackupFilenamePath)
 
 	defaultErrorAppendage = fmt.Sprintf("Logs and config can be found in %v. Please raise an issue or contribute at: %v", configFolder, repoLink)
 }
 
 func getConfig() {
 	// TODO once proper interface for bookmarker is made, do not export this
-	initConsts()
+	err := initConsts()
+	if err != nil {
+		panic(err.Error())
+	}
 	establishFolderPaths()
 
 	logger.Debug(fmt.Sprintf("Config folder location: %v", configFolder))

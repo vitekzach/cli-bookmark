@@ -3,6 +3,7 @@ package src
 type Command struct {
 	Command  string
 	Category Category
+	Name     string
 	// CommandShell     Shell
 	// ShellCommand     bool
 	// LaunchExternally bool
@@ -14,7 +15,6 @@ type Category struct {
 }
 
 type Shell struct {
-	Name      string
-	ShortName string
-	Command   string
+	Name    string
+	Command string
 }
