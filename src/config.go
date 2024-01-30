@@ -140,20 +140,10 @@ func establishFolderPaths() {
 	configFolder = filepath.Join(userConfigFolder, configLeafFolder)
 
 	var configFilenamePath string
-	configFileNameEnv := os.Getenv("CLI_BOOKMARK_CONFIG_FILENAME")
-	if configFileNameEnv != "" {
-		configFilenamePath = configFileNameEnv
-	} else {
-		configFilenamePath = "config.json"
-	}
+	_ = setFromEnvWithDefaultStr("CLI_BOOKMARK_CONFIG_FILENAME", "config.json", &configFilenamePath)
 
 	var configBackupFilenamePath string
-	configBackupFileNameEnv := os.Getenv("CLI_BOOKMARK_CONFIG_BACKUP_FILENAME")
-	if configBackupFileNameEnv != "" {
-		configBackupFilenamePath = configBackupFileNameEnv
-	} else {
-		configBackupFilenamePath = "config_backup.json"
-	}
+	_ = setFromEnvWithDefaultStr("CLI_BOOKMARK_CONFIG_BACKUP_FILENAME", "config_backup.json", &configBackupFilenamePath)
 
 	configFilePath = filepath.Join(configFolder, configFilenamePath)
 	configBackupFilePath = filepath.Join(configFolder, configBackupFilenamePath)

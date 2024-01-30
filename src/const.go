@@ -1,7 +1,6 @@
 package src
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -18,15 +17,11 @@ func initConsts() error {
 	currentVersion = "0.0.1"
 	repoLink = "https://github.com/vitekzach/cli-bookmark"
 
-	defaultEnvCategories := os.Getenv("CLI_BOOKMARK_CATEGORIES")
-	if defaultEnvCategories != "" {
-		defaultCategories = []Category{}
-		err := json.Unmarshal([]byte(defaultEnvCategories), &defaultCategories)
-		if err != nil {
-			return errors.New("value in environmetal varible CLI_BOOKMARK_CATEGORIES cannot be unmashalled")
-		}
-	} else {
-		defaultCategories = []Category{{Name: "Default"}}
+	defaultCategoriesFallback := []Category{{Name: "Default"}}
+	defaultCategories = defaultCategoriesFallback
+	_, err := setFromEnvJSONWithDefaultStruct[[]Category]("CLI_BOOKMARK_CATEGORIES", defaultCategoriesFallback, &defaultCategories)
+	if err != nil {
+		return errors.New("value in environmetal varible CLI_BOOKMARK_CATEGORIES cannot be unmashalled")
 	}
 
 	switch runtime.GOOS {

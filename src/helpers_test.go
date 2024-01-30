@@ -50,7 +50,7 @@ func TestSetFromEnvJSONWithDefaultStruct(t *testing.T) {
 
 	envToSet := "r"
 	os.Setenv("CLI_BOOKMARK_DEFAULT", envToSet)
-	valPresent, error = setFromEnvJSONWithDefaultStruct[testStruct](testEnvVar, defaultVal, &varToSet)
+	_, error = setFromEnvJSONWithDefaultStruct[testStruct](testEnvVar, defaultVal, &varToSet)
 	if error == nil {
 		t.Fatalf("Expected unmashall error, but it didn't error.")
 	}
